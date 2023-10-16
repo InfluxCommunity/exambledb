@@ -1,17 +1,17 @@
 import requests
 
 data = [{
-    "table":"mytable",
-    "col1": "two",
-    "col2": 2
+    "table":"garystable",
+    "dog": "andy",
+    "weight": 2
 }, {
-    "table":"mytable",
-    "col1": "three",
-    "col2": 3
+    "table":"garystable",
+    "dog": "oscar",
+    "weight": 3
 },{
-    "table":"mytable",
-    "col1": "four",
-    "col2": 4
+    "table":"garystable",
+    "dog": "red",
+    "weight": 4
 } ]
 
 response = requests.post("http://localhost:5001/write", json=data)

@@ -2,12 +2,11 @@ import os
 import pyarrow as pa
 from pyarrow import flight
 import pyarrow.parquet as pq
-import datafusion
 from datafusion import SessionContext
 import pandas as pd
 from flask import Flask, jsonify, request
 import threading
-
+import json
 
 app = Flask(__name__)
 
@@ -47,17 +46,13 @@ class SimpleFlightServer(flight.FlightServerBase):
         return []
 
     def get_flight_info(self, context, descriptor):
-        # Extract SQL query from the descriptor's path
-        sql_query = descriptor.path[0].decode()
-        table_name = descriptor.path[1].decode()
-        ticket = flight.Ticket(sql_query + ":" + table_name)  # encode SQL query in the ticket
-        endpoints = [flight.FlightEndpoint(ticket=ticket, locations=[flight.Location.for_grpc_tcp("localhost", 8081)])]
-        schema = pq.read_schema(f"{table_name}.parquet")  # you can derive schema directly from the parquet file
-        return flight.FlightInfo(schema, descriptor, endpoints, total_records=-1, total_bytes=-1)
+        return None
     
     def do_get(self, context, ticket):
         try:
-            sql_query, table_name = ticket.ticket.decode().split(":")
+            ticket_obj = json.loads(ticket.ticket.decode())
+            sql_query = ticket_obj["sql"]
+            table_name = ticket_obj["table"]
             
             # Using DataFusion to execute the SQL query
             ctx = SessionContext()
