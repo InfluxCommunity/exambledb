@@ -1,9 +1,7 @@
-import pyarrow as pa
-from pyarrow import flight
-from pyarrow.flight import FlightClient, Ticket, FlightCallOptions
+from pyarrow.flight import Ticket, FlightClient
 import json
 
-client = flight.FlightClient("grpc://localhost:8081")
+client = FlightClient("grpc://localhost:8081")
 ticket_bytes = json.dumps({'sql':'select * from mytable', 'table':'mytable'})
 ticket = Ticket(ticket_bytes)
 reader = client.do_get(ticket)

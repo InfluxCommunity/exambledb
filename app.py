@@ -12,10 +12,6 @@ app = Flask(__name__)
 
 @app.route('/write', methods=['POST'])
 def write():
-    """For eachw row passed in, read the table name,
-    combine the existing data (if any) with the new data,
-    write back the file."""
-
     data = request.json
     table_name = data["table"]
     rows = data["rows"]
@@ -36,7 +32,7 @@ def write():
     table = pa.Table.from_pandas(combined_df)
     pq.write_table(table, file_path)
 
-    return jsonify({"message": f"{len(rows)} rows written"}), 200
+    return jsonify({"message": f"{len(rows)} rows written"}), 204
 
 # Simple Flight server implementation
 class SimpleFlightServer(flight.FlightServerBase):
