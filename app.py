@@ -17,25 +17,24 @@ def write():
     write back the file."""
 
     data = request.json
+    table_name = data["table"]
+    rows = data["rows"]
 
-    rows = data
-    for row in data:
-        table_name = row["table"]
-        file_path = f"{table_name}.parquet"
-        print(row)
-        df = pd.DataFrame([row])
+    df = pd.DataFrame(rows)
+ 
+    file_path = f"{table_name}.parquet"
         
-        df = df.drop(columns=['table'])
+    # add the new data to the old data, if any old data
+    if os.path.exists(file_path):
+        existing_table = pq.read_table(file_path)
+        existing_df = existing_table.to_pandas()
+        combined_df = pd.concat([existing_df, df], ignore_index=True)
+    else:
+        combined_df = df
         
-        if os.path.exists(file_path):
-            existing_table = pq.read_table(file_path)
-            existing_df = existing_table.to_pandas()
-            combined_df = pd.concat([existing_df, df], ignore_index=True)
-        else:
-            combined_df = df
-        
-        table = pa.Table.from_pandas(combined_df)
-        pq.write_table(table, file_path)
+    # write the data to the parquet file
+    table = pa.Table.from_pandas(combined_df)
+    pq.write_table(table, file_path)
 
     return jsonify({"message": f"{len(rows)} rows written"}), 200
 
@@ -64,7 +63,6 @@ class SimpleFlightServer(flight.FlightServerBase):
             return flight.RecordBatchStream(table)
         except Exception as e:
             print(e)
-
 
 def run_web_server():
     print("Starting Flask server on localhost:5000")
