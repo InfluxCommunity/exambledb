@@ -2,6 +2,8 @@ import os
 import pyarrow as pa
 from pyarrow import flight
 import pyarrow.parquet as pq
+import datafusion
+from datafusion import SessionContext
 import pandas as pd
 from flask import Flask, jsonify, request
 import threading
@@ -36,7 +38,7 @@ def write():
         table = pa.Table.from_pandas(combined_df)
         pq.write_table(table, file_path)
 
-    return jsonify({"message": f"{len(rows)} row written"}), 200
+    return jsonify({"message": f"{len(rows)} rows written"}), 200
 
 # Simple Flight server implementation
 class SimpleFlightServer(flight.FlightServerBase):
@@ -45,22 +47,28 @@ class SimpleFlightServer(flight.FlightServerBase):
         return []
 
     def get_flight_info(self, context, descriptor):
-        table_name = descriptor.path[0].decode("utf-8")
-        file_path = f"{table_name}.parquet"
-        if os.path.exists(file_path):
-            table = pq.read_table(file_path)
-            schema = table.schema
-            endpoints = [flight.FlightEndpoint(ticket=flight.Ticket(table_name.encode('utf-8')), locations=[flight.Location.for_grpc_tcp("localhost", 8081)])]
-            return flight.FlightInfo(schema, descriptor, endpoints, table.num_rows, 0)
-        raise flight.FlightUnavailableError(f"No data for descriptor {table_name}")
-
+        # Extract SQL query from the descriptor's path
+        sql_query = descriptor.path[0].decode()
+        table_name = descriptor.path[1].decode()
+        ticket = flight.Ticket(sql_query + ":" + table_name)  # encode SQL query in the ticket
+        endpoints = [flight.FlightEndpoint(ticket=ticket, locations=[flight.Location.for_grpc_tcp("localhost", 8081)])]
+        schema = pq.read_schema(f"{table_name}.parquet")  # you can derive schema directly from the parquet file
+        return flight.FlightInfo(schema, descriptor, endpoints, total_records=-1, total_bytes=-1)
+    
     def do_get(self, context, ticket):
-        table_name = ticket.ticket.decode('utf-8')
-        file_path = f"{table_name}.parquet"
-        if os.path.exists(file_path):
-            table = pq.read_table(file_path)
+        try:
+            sql_query, table_name = ticket.ticket.decode().split(":")
+            
+            # Using DataFusion to execute the SQL query
+            ctx = SessionContext()
+            ctx.register_parquet(table_name, f"{table_name}.parquet")
+            
+            result = ctx.sql(sql_query)
+            table = result.to_arrow_table()
+            
             return flight.RecordBatchStream(table)
-        raise flight.FlightUnavailableError(f"No data for ticket {table_name}")
+        except Exception as e:
+            print(e)
 
 
 def run_web_server():
