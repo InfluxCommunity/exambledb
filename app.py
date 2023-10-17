@@ -28,11 +28,11 @@ def write():
         existing_table = pq.read_table(file_path)
         existing_df = existing_table.to_pandas()
 
-        for row in rows:
-            # Check if there's a primary key specified in the row
-            if "primary_key" in data:
-                primary_key = data["primary_key"]
-
+        # Check if there's a primary key specified in the data
+        if "primary_key" in data:
+            primary_key = data["primary_key"]
+            
+            for row in rows:
                 # Create a boolean mask for matching rows based on the keys and their values
                 mask = existing_df.all(axis=1)
                 for key in primary_key:
@@ -48,7 +48,10 @@ def write():
                 else:
                     # Append the new data to the existing data
                     combined_df = pd.concat([existing_df, df], ignore_index=True)
-
+        else:
+            # Append the new data to the existing data without checks
+            combined_df = pd.concat([existing_df, df], ignore_index=True)
+    
     # write the data to the parquet file
     table = pa.Table.from_pandas(combined_df)
     pq.write_table(table, file_path)
