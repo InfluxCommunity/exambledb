@@ -20,24 +20,24 @@ def write():
         file_path = f"{table_name}.parquet"
         print(row)
         df = pd.DataFrame([row])
-        
+
         df = df.drop(columns=['table'])
-        
+
         if os.path.exists(file_path):
             existing_table = pq.read_table(file_path)
             existing_df = existing_table.to_pandas()
-            
+
             # Check if there's a primary key specified in the row
             if "primary_key" in row:
                 primary_key = row["primary_key"]
-                
-                # Create a boolean mask for matching rows based on the keys
+
+                # Create a boolean mask for matching rows based on the keys and their values
                 mask = existing_df.all(axis=1)
                 for key in primary_key:
                     mask &= (existing_df[key] == row[key])
-                
+
                 existing_records = existing_df[mask]
-                
+
                 if not existing_records.empty:
                     # Update the existing records with new values
                     for index, record in existing_records.iterrows():
@@ -51,7 +51,7 @@ def write():
                 existing_df = pd.concat([existing_df, df], ignore_index=True)
         else:
             existing_df = df
-        
+
         table = pa.Table.from_pandas(existing_df)
         pq.write_table(table, file_path)
 
