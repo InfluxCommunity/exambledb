@@ -1,12 +1,8 @@
-import pyarrow as pa
-from pyarrow import flight
+from pyarrow.flight import Ticket, FlightClient
+import json
 
-client = flight.FlightClient("grpc://localhost:8081")
-descriptor = flight.FlightDescriptor.for_path("select col1 from mytable", "mytable")
-flight_info = client.get_flight_info(descriptor)
-reader = client.do_get(flight_info.endpoints[0].ticket)
-table = reader.read_all()
-
-print(table.to_pandas())
-
-
+client = FlightClient("grpc://localhost:8081")
+ticket_bytes = json.dumps({'sql':'select * from mytable', 'table':'mytable'})
+ticket = Ticket(ticket_bytes)
+reader = client.do_get(ticket)
+print(reader.read_all().to_pandas())

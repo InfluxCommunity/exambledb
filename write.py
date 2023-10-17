@@ -1,21 +1,14 @@
 import requests
 
-data = [{
+data = {
     "table":"mytable",
-    "col1": "two",
-    "col2": 2,
-    "primary_key": ["col1"]
-}, {
-    "table":"mytable",
-    "col1": "three",
-    "col2": 3,
-    "primary_key": ["col1"]
-},{
-    "table":"mytable",
-    "col1": "four",
-    "col2": 4,
-    "primary_key": ["col1"]
-} ]
+    "primary_key": ["col1"],
+    "rows":[
+        {"col1":"one",
+         "col2":1},
+        {"col1":"two",
+         "col2":2}         
+    ]}
 
 response = requests.post("http://localhost:5001/write", json=data)
 

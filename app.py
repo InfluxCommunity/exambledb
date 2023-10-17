@@ -2,34 +2,36 @@ import os
 import pyarrow as pa
 from pyarrow import flight
 import pyarrow.parquet as pq
-import datafusion
 from datafusion import SessionContext
 import pandas as pd
 from flask import Flask, jsonify, request
 import threading
-
+import json
 
 app = Flask(__name__)
 
 @app.route('/write', methods=['POST'])
 def write():
     data = request.json
+    table_name = data["table"]
+    rows = data["rows"]
 
-    for row in data:
-        table_name = row["table"]
-        file_path = f"{table_name}.parquet"
-        print(row)
-        df = pd.DataFrame([row])
+    df = pd.DataFrame(rows)
 
-        df = df.drop(columns=['table'])
+    file_path = f"{table_name}.parquet"
 
-        if os.path.exists(file_path):
-            existing_table = pq.read_table(file_path)
-            existing_df = existing_table.to_pandas()
+    # Initialize combined_df with the new data
+    combined_df = df
 
+    # add the new data to the old data, if any old data
+    if os.path.exists(file_path):
+        existing_table = pq.read_table(file_path)
+        existing_df = existing_table.to_pandas()
+
+        for row in rows:
             # Check if there's a primary key specified in the row
-            if "primary_key" in row:
-                primary_key = row["primary_key"]
+            if "primary_key" in data:
+                primary_key = data["primary_key"]
 
                 # Create a boolean mask for matching rows based on the keys and their values
                 mask = existing_df.all(axis=1)
@@ -45,17 +47,15 @@ def write():
                             existing_df.at[index, key] = value
                 else:
                     # Append the new data to the existing data
-                    existing_df = pd.concat([existing_df, df], ignore_index=True)
-            else:
-                # Append the new data to the existing data if no primary key is specified
-                existing_df = pd.concat([existing_df, df], ignore_index=True)
-        else:
-            existing_df = df
+                    combined_df = pd.concat([existing_df, df], ignore_index=True)
 
-        table = pa.Table.from_pandas(existing_df)
-        pq.write_table(table, file_path)
+    # write the data to the parquet file
+    table = pa.Table.from_pandas(combined_df)
+    pq.write_table(table, file_path)
 
-    return jsonify({"message": f"{len(data)} rows written or updated"}), 200
+    return jsonify({"message": f"{len(rows)} rows written"}), 204
+
+
 
 # Simple Flight server implementation
 class SimpleFlightServer(flight.FlightServerBase):
@@ -64,17 +64,13 @@ class SimpleFlightServer(flight.FlightServerBase):
         return []
 
     def get_flight_info(self, context, descriptor):
-        # Extract SQL query from the descriptor's path
-        sql_query = descriptor.path[0].decode()
-        table_name = descriptor.path[1].decode()
-        ticket = flight.Ticket(sql_query + ":" + table_name)  # encode SQL query in the ticket
-        endpoints = [flight.FlightEndpoint(ticket=ticket, locations=[flight.Location.for_grpc_tcp("localhost", 8081)])]
-        schema = pq.read_schema(f"{table_name}.parquet")  # you can derive schema directly from the parquet file
-        return flight.FlightInfo(schema, descriptor, endpoints, total_records=-1, total_bytes=-1)
+        return None
     
     def do_get(self, context, ticket):
         try:
-            sql_query, table_name = ticket.ticket.decode().split(":")
+            ticket_obj = json.loads(ticket.ticket.decode())
+            sql_query = ticket_obj["sql"]
+            table_name = ticket_obj["table"]
             
             # Using DataFusion to execute the SQL query
             ctx = SessionContext()
@@ -87,10 +83,9 @@ class SimpleFlightServer(flight.FlightServerBase):
         except Exception as e:
             print(e)
 
-
 def run_web_server():
     print("Starting Flask server on localhost:5000")
-    app.run(port=5001,host="0.0.0.0")
+    app.run(port=5001, host="0.0.0.0")
 
 def run_flight_server():
     location = flight.Location.for_grpc_tcp("localhost", 8081)
@@ -108,3 +103,4 @@ if __name__ == "__main__":
 
     t1.join()
     t2.join()
+
