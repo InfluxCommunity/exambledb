@@ -13,13 +13,8 @@ app = Flask(__name__)
 
 @app.route('/write', methods=['POST'])
 def write():
-    """For eachw row passed in, read the table name,
-    combine the existing data (if any) with the new data,
-    write back the file."""
-
     data = request.json
 
-    rows = data
     for row in data:
         table_name = row["table"]
         file_path = f"{table_name}.parquet"
@@ -31,14 +26,36 @@ def write():
         if os.path.exists(file_path):
             existing_table = pq.read_table(file_path)
             existing_df = existing_table.to_pandas()
-            combined_df = pd.concat([existing_df, df], ignore_index=True)
+            
+            # Check if there's a primary key specified in the row
+            if "primary_key" in row:
+                primary_key = row["primary_key"]
+                
+                # Create a boolean mask for matching rows based on the keys
+                mask = existing_df.all(axis=1)
+                for key in primary_key:
+                    mask &= (existing_df[key] == row[key])
+                
+                existing_records = existing_df[mask]
+                
+                if not existing_records.empty:
+                    # Update the existing records with new values
+                    for index, record in existing_records.iterrows():
+                        for key, value in row.items():
+                            existing_df.at[index, key] = value
+                else:
+                    # Append the new data to the existing data
+                    existing_df = pd.concat([existing_df, df], ignore_index=True)
+            else:
+                # Append the new data to the existing data if no primary key is specified
+                existing_df = pd.concat([existing_df, df], ignore_index=True)
         else:
-            combined_df = df
+            existing_df = df
         
-        table = pa.Table.from_pandas(combined_df)
+        table = pa.Table.from_pandas(existing_df)
         pq.write_table(table, file_path)
 
-    return jsonify({"message": f"{len(rows)} rows written"}), 200
+    return jsonify({"message": f"{len(data)} rows written or updated"}), 200
 
 # Simple Flight server implementation
 class SimpleFlightServer(flight.FlightServerBase):
