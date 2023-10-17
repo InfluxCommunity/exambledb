@@ -55,8 +55,6 @@ def write():
 
     return jsonify({"message": f"{len(rows)} rows written"}), 204
 
-
-
 # Simple Flight server implementation
 class SimpleFlightServer(flight.FlightServerBase):
     def list_flights(self, context, criteria):
