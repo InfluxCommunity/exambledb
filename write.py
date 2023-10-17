@@ -2,6 +2,7 @@ import requests
 
 data = {
     "table":"mytable",
+    "primary_key": ["col1"],
     "rows":[
         {"col1":"one",
          "col2":1},
