@@ -58,6 +58,26 @@ def write():
 
     return jsonify({"message": f"{len(rows)} rows written"}), 204
 
+@app.route('/query', methods=['POST'])
+def flightsql():
+    data = request.json
+    table_name = data["table"]
+    query = data["query"]
+    file_path = f"{table_name}.parquet"
+    if os.path.exists(file_path) and :
+        try:
+            ctx = SessionContext()
+            ctx.register_parquet(table_name, file_path)
+            res = ctx.sql(query)
+            res_dict = res.to_pandas().to_dict()
+            return jsonify(res_dict), 200
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            return jsonify({"error": "An error occurred"}), 500
+    else:
+        return jsonify({"message": "Not Found"}), 404
+
+
 # Simple Flight server implementation
 class SimpleFlightServer(flight.FlightServerBase):
     def list_flights(self, context, criteria):
