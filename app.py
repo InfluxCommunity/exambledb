@@ -64,7 +64,7 @@ def flightsql():
     table_name = data["table"]
     query = data["query"]
     file_path = f"{table_name}.parquet"
-    if os.path.exists(file_path) and :
+    if os.path.exists(file_path) and query:
         try:
             ctx = SessionContext()
             ctx.register_parquet(table_name, file_path)
