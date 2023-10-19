@@ -12,7 +12,7 @@ This _"hello world"_ example is not meant to be efficient for featureful and was
 to inspire developers to use the Apache Arrow project to write their own datatbases.
 
 
-##### :construction: Building Blocks
+##### Building Blocks
 
 -  Flask server with `/write` and `/query` endpoints
 - Flight server for sending queries
