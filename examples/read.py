@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pyarrow.flight import Ticket, FlightClient
 import json
 
