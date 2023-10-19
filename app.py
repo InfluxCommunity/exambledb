@@ -1,4 +1,5 @@
 import os
+import sys
 import pyarrow as pa
 from pyarrow import flight
 import pyarrow.parquet as pq
@@ -24,7 +25,7 @@ def write():
     combined_df = df
 
     # add the new data to the old data, if any old data
-    if os.path.exists(file_path):
+    if os.path.exists(file_path) and is_safe_path(os.getcwd(), file_path):
         existing_table = pq.read_table(file_path)
         existing_df = existing_table.to_pandas()
 
@@ -58,13 +59,14 @@ def write():
 
     return jsonify({"message": f"{len(rows)} rows written"}), 204
 
+# Simple FlightSQL REST endpoint
 @app.route('/query', methods=['POST'])
 def flightsql():
     data = request.json
     table_name = data["table"]
     query = data["query"]
     file_path = f"{table_name}.parquet"
-    if os.path.exists(file_path) and query:
+    if os.path.exists(file_path) and query and is_safe_path(os.getcwd(), file_path):
         try:
             ctx = SessionContext()
             ctx.register_parquet(table_name, file_path)
@@ -103,6 +105,14 @@ class SimpleFlightServer(flight.FlightServerBase):
             return flight.RecordBatchStream(table)
         except Exception as e:
             print(e)
+            
+def is_safe_path(basedir, path, follow_symlinks=True):
+    # resolves symbolic links
+    if follow_symlinks:
+        matchpath = os.path.realpath(path)
+    else:
+        matchpath = os.path.abspath(path)
+    return basedir == os.path.commonpath((basedir, matchpath))
 
 def run_web_server():
     print("Starting Flask server on localhost:5000")
