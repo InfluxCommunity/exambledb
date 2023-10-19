@@ -2,7 +2,7 @@
 
 # SimpleDB
 
-> A python example for creating your own online database using Apache Arrow.
+> A python example for creating your own online database using [Apache Arrow](https://arrow.apache.org/).
 
 <br>
 
@@ -14,10 +14,10 @@ to inspire developers to use the Apache Arrow project to write their own datatba
 
 ##### Building Blocks
 
--  Flask server with `/write` and `/query` endpoints
-- Flight server for sending queries
-- Datafusion for process sql queries
-- All data in stored in `parquet` files
+-  [Flask server](https://flask.palletsprojects.com/) with `/write` and `/query` endpoints
+- [Flight server](https://arrow.apache.org/blog/2022/02/16/introducing-arrow-flight-sql/) for sending queries
+- [Datafusion](https://arrow.apache.org/datafusion/user-guide/introduction.html) for process sql queries
+- [Parquet](https://arrow.apache.org/docs/python/parquet.html) file storage
 
 <br>
 
