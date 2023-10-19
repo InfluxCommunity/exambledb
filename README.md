@@ -8,13 +8,13 @@
 
 #### :rainbow: About
 
-This _"hello world"_ example is not meant to be efficient for featureful and was designed <br>
-to inspire developers to use the Apache Arrow project to write their own datatbases.
+This _'hello world'_ example is not intended to be _complete, feature-rich or highly efficient_<br>
+It was designed to inspire developers to utilize [Apache Arrow](https://arrow.apache.org/) for _creating their own databases_.
 
 
 ##### Building Blocks
 
--  [Flask server](https://flask.palletsprojects.com/) with `/write` and `/query` endpoints
+- [Flask server](https://flask.palletsprojects.com/) with `/write` and `/query` endpoints
 - [Flight server](https://arrow.apache.org/blog/2022/02/16/introducing-arrow-flight-sql/) for sending queries
 - [Datafusion](https://arrow.apache.org/datafusion/user-guide/introduction.html) for process sql queries
 - [Parquet](https://arrow.apache.org/docs/python/parquet.html) file storage
