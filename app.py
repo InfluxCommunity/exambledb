@@ -7,6 +7,7 @@ import pandas as pd
 from flask import Flask, jsonify, request
 import threading
 import json
+import pathlib
 
 app = Flask(__name__)
 
@@ -59,7 +60,14 @@ def write():
     return jsonify({"message": f"{len(rows)} rows written"}), 204
 
 # Simple Flight server implementation
-class SimpleFlightServer(flight.FlightServerBase):
+class ExampleFlightServer(flight.FlightServerBase):
+    # def __init__(self, location="grpc://0.0.0.0:8815",
+    #             repo=pathlib.Path("./datasets"), **kwargs):
+    #     print("***** INIT ****")
+    #     super(ExampleFlightServer, self).__init__(location, **kwargs)
+    #     self._location = location
+    #     self._repo = repo
+
     def list_flights(self, context, criteria):
         # Placeholder logic
         return []
@@ -84,17 +92,20 @@ class SimpleFlightServer(flight.FlightServerBase):
         except Exception as e:
             print(e)
     
-    def do_put(self, context, descriptor, reader, writer):
-        print(context,descriptor,reader, writer)
-        pass
-
+    # def do_put(self, context, descriptor, reader, writer):
+    #     print("***************")
+        # dataset = descriptor.path[0].decode('utf-8')
+        # dataset_path = self._repo / dataset
+        # data_table = reader.read_all()
+        # pa.parquet.write_table(data_table, dataset_path)
+        
 def run_web_server():
     print("Starting Flask server on localhost:5000")
     app.run(port=5001, host="0.0.0.0")
 
 def run_flight_server():
     location = flight.Location.for_grpc_tcp("localhost", 8081)
-    server = SimpleFlightServer(location)
+    server = ExampleFlightServer(location)
 
     print("Starting Flight server on localhost:8081")
     server.serve()
