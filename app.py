@@ -83,6 +83,10 @@ class SimpleFlightServer(flight.FlightServerBase):
             return flight.RecordBatchStream(table)
         except Exception as e:
             print(e)
+    
+    def do_put(self, context, descriptor, reader, writer):
+        print(context,descriptor,reader, writer)
+        pass
 
 def run_web_server():
     print("Starting Flask server on localhost:5000")
