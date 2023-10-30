@@ -3,8 +3,8 @@ import io
 from pyarrow.flight import FlightDescriptor, FlightClient
 import pyarrow as pa
 
-data = [{"col1":1, "col2":"one"},
-        {"col1":1, "col2":"two"}]
+data = [{"col1":3, "col2":"one"},
+        {"col1":3, "col2":"two"}]
 
 table = pa.Table.from_pylist(data)
 
