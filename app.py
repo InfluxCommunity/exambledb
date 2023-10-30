@@ -92,13 +92,24 @@ class ExampleFlightServer(flight.FlightServerBase):
         except Exception as e:
             print(e)
     
-    # def do_put(self, context, descriptor, reader, writer):
-    #     print("***************")
-        # dataset = descriptor.path[0].decode('utf-8')
-        # dataset_path = self._repo / dataset
-        # data_table = reader.read_all()
-        # pa.parquet.write_table(data_table, dataset_path)
+    def do_put(self, context, descriptor, reader, writer):
+        table_name = descriptor.path[0].decode('utf-8')
+        data_table = reader.read_all()
+        file_path = f"{table_name}.parquet"
         
+        if os.path.exists(file_path):
+            try:
+                existing_table = pq.read_table(file_path)
+                data_table = pa.concat_tables([data_table, existing_table])
+            except Exception as e:
+                print(e)
+
+        try:
+            print(data_table)
+            pq.write_table(data_table, file_path)
+        except Exception as e:
+            print(e)
+
 def run_web_server():
     print("Starting Flask server on localhost:5000")
     app.run(port=5001, host="0.0.0.0")
