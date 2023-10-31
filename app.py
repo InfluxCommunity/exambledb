@@ -3,17 +3,9 @@ import pyarrow as pa
 from pyarrow import flight
 import pyarrow.parquet as pq
 from datafusion import SessionContext
-import pandas as pd
-import threading
 import json
 
 class ExampleFlightServer(flight.FlightServerBase):
-    def list_flights(self, context, criteria):
-        return []
-
-    def get_flight_info(self, context, descriptor):
-        return None
-    
     def do_get(self, context, ticket):
         try:
             ticket_obj = json.loads(ticket.ticket.decode())
