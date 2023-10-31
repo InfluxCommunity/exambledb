@@ -1,16 +1,17 @@
-import requests
+import json
+import io
+from pyarrow.flight import FlightDescriptor, FlightClient
+import pyarrow as pa
 
-data = {
-    "table":"mytable",
-    "primary_key": ["col1"],
-    "rows":[
-        {"col1":"one",
-         "col2":1},
-        {"col1":"two",
-         "col2":2}         
-    ]}
+data = [{"col1":3, "col2":"one"},
+        {"col1":3, "col2":"two"}]
 
-response = requests.post("http://localhost:5001/write", json=data)
+table = pa.Table.from_pylist(data)
 
-print(response.status_code)
-print(response.text)
+descriptor = FlightDescriptor.for_path("mytable")
+client = FlightClient("grpc://localhost:8081")
+
+writer, _ = client.do_put(descriptor, table.schema)
+writer.write_table(table)
+print(f"wrote: {table}")
+writer.close()
