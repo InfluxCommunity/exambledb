@@ -38,6 +38,11 @@ class ExampleFlightServer(flight.FlightServerBase):
             pq.write_table(data_table, file_path)
         except Exception as e:
             print(e)
+        
+    def do_action(self, context, action):
+        bytes = json.dumps({"action":action.type}).encode()
+        result = flight.Result(bytes)
+        return [result]
 
 def run_flight_server():
     location = flight.Location.for_grpc_tcp("localhost", 8081)
